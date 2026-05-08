@@ -38,6 +38,8 @@ class MyBot(commands.Bot):
         await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.config")
         await self.load_extension("cogs.database")
+        await self.load_extension("cogs.FlagManager")
+        await self.load_extension("cogs.SuspiciousKeywords")
 
         # Sync slash commands
         guild = discord.Object(id=DEV_GUILD_ID)
@@ -49,7 +51,7 @@ class MyBot(commands.Bot):
 bot = MyBot()
 
 image_filter = ImageFilter(
-    "scam_hashes.txt",
+    "./threat_database/scam_hashes.txt",
     threshold=5
 )
 
