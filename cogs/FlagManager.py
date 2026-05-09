@@ -1,8 +1,11 @@
 from collections import defaultdict
 import time
+import discord
+from discord.ext import commands
 
-class FlagManager:
-    def __init__(self):
+class FlagManager(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
         self.user_scores = defaultdict(float)
         self.last_update = {}
 
@@ -25,3 +28,6 @@ class FlagManager:
             if self.scores[user_id] <= 0.5:
                 del self.scores[user_id]
                 del self.last_update[user_id]
+            
+async def setup(bot):
+    await bot.add_cog(FlagManager(bot))
