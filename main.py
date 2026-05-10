@@ -4,9 +4,7 @@ import os
 
 from dotenv import load_dotenv
 
-from logs import logs
 from ConfigLoader import load_config
-from bot_filter import ImageFilter
 
 load_dotenv()
 
@@ -40,6 +38,8 @@ class MyBot(commands.Bot):
         await self.load_extension("cogs.database")
         await self.load_extension("cogs.FlagManager")
         await self.load_extension("cogs.SuspiciousKeywords")
+        await self.load_extension("cogs.logs")
+        await self.load_extension("cogs.image_filter")
 
         # Sync slash commands
         guild = discord.Object(id=DEV_GUILD_ID)
@@ -50,20 +50,9 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
-image_filter = ImageFilter(
-    "./threat_database/scam_hashes.txt",
-    threshold=5
-)
-
-logs(
-    bot,
-    CONFIG=CONFIG,
-    image_filter=image_filter
-)
-
-
 @bot.event
 async def on_ready():
+    bot.config = CONFIG
 
     status_type = CONFIG["general"]["status_type"].lower()
     status_text = CONFIG["general"]["status_text"]

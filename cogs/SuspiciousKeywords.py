@@ -6,6 +6,7 @@ class SuspiciousKeywords(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.flag_manager = self.bot.get_cog("FlagManager")
+        self.log_manager = self.bot.get_cog("LogManager")
         self.keywords_file = "./threat_database/suspicious_keywords.txt"
         self.known_keywords = self.load_keywords()
 
