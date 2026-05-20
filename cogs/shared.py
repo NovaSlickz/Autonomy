@@ -9,7 +9,7 @@ db.create_table("warnings", "guild_id INTEGER", "user INTEGER", "reason TEXT")
 db.create_table("DB_ACCESS_TOKENS", "TOKENS TEXT")
 db.create_table("logging_channel", "guild_id INTEGER", "channel TEXT")
 db.create_table("commands_is_enabled", "guild_id INTEGER", "command TEXT", "is_enabled BOOLEAN")
-
+db.create_table("quarantined_users", "guild_id INTEGER", "user_id INTEGER", "roles TEXT")
 
 def command_enabled(default=True):
 
