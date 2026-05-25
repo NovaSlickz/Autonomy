@@ -199,8 +199,4 @@ class LogsManager(commands.Cog):
 
 async def setup(bot):
 
-    await bot.add_cog(
-        LogsManager(
-            bot
-        )
-    )
+    await bot.add_cog(LogsManager(bot))

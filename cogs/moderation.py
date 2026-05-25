@@ -10,6 +10,7 @@ class ModerationCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.log_manager = self.bot.get_cog("LogsManager")
 
     @commands.hybrid_command(name="quarantine", description="Quarantine a member.")
     @command_enabled(default=True)
@@ -57,6 +58,13 @@ class ModerationCog(commands.Cog):
                 reason=f"{ctx.author} | {reason}"
             )
 
+            description = (
+                f"Quarantined user: {member.mention}\n"
+                f"Reason: {reason}\n\n"
+                f"Quarantinued by: {ctx.author.mention}\n"
+            )
+
+            await self.log_manager.add_log(guild_id=ctx.guild.id, event_name="User quarantined", event_description=description, event_colour=0xff0000)
             await ctx.reply(f"{member.mention} has been quarantined.\nReason: {reason}")
 
         except Exception as error:

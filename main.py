@@ -32,13 +32,13 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
 
         # Load cogs
+        await self.load_extension("cogs.logs")
         await self.load_extension("cogs.utility")
-        await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.config")
         await self.load_extension("cogs.database")
         await self.load_extension("cogs.FlagManager")
         await self.load_extension("cogs.SuspiciousKeywords")
-        await self.load_extension("cogs.logs")
+        await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.image_filter")
         await self.load_extension("cogs.LinkSpam")
         await self.load_extension("cogs.MassMentionPrevention")
