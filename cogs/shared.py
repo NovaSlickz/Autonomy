@@ -12,7 +12,7 @@ db.create_table("modules_is_enabled", "guild_id INTEGER", "module TEXT", "is_ena
 db.create_table("quarantined_users", "guild_id INTEGER", "user_id INTEGER", "roles TEXT")
 
 CUSTOM_MODULES = [
-    "logs_deleted_messages",
+    "logs.deleted_messages",
     "logs_edited_messages",
     "logs_member_join",
     "logs_member_remove",

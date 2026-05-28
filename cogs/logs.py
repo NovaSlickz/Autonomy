@@ -77,7 +77,7 @@ class LogsManager(commands.Cog):
 
         if not await self.is_enabled(
             message.guild.id,
-            "logs_deleted_messages"
+            "logs.deleted_messages"
         ):
             return
 
