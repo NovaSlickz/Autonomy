@@ -8,8 +8,17 @@ db.create_table("test", "guild_id INTEGER", "text TEXT")
 db.create_table("warnings", "guild_id INTEGER", "user INTEGER", "reason TEXT")
 db.create_table("DB_ACCESS_TOKENS", "TOKENS TEXT")
 db.create_table("logging_channel", "guild_id INTEGER", "channel TEXT")
-db.create_table("commands_is_enabled", "guild_id INTEGER", "command TEXT", "is_enabled BOOLEAN")
+db.create_table("modules_is_enabled", "guild_id INTEGER", "module TEXT", "is_enabled BOOLEAN")
 db.create_table("quarantined_users", "guild_id INTEGER", "user_id INTEGER", "roles TEXT")
+
+CUSTOM_MODULES = [
+    "logs_deleted_messages",
+    "logs_edited_messages",
+    "logs_member_join",
+    "logs_member_remove",
+    "logs_invites"
+]
+
 
 def command_enabled(default=True):
 
@@ -35,10 +44,10 @@ def command_enabled(default=True):
             for name in names_to_check:
 
                 result = db.get(
-                    "commands_is_enabled",
+                    "modules_is_enabled",
                     {
                         "guild_id": guild_id,
-                        "command": name
+                        "module": name
                     }
                 )
 
@@ -71,5 +80,7 @@ def get_toggleable_commands(bot):
             while parent:
                 cmds.add(parent.qualified_name)
                 parent = parent.parent
+
+    cmds.update(CUSTOM_MODULES)
 
     return sorted(cmds)

@@ -7,6 +7,7 @@ db = Database("bot.db")
 
 
 class LogsManager(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -17,16 +18,44 @@ class LogsManager(commands.Cog):
             re.IGNORECASE
         )
 
+    async def is_enabled(
+        self,
+        guild_id,
+        module_name
+    ):
+
+        config_cog = self.bot.get_cog("ConfigCog")
+
+        if config_cog is None:
+            return True
+
+        return await config_cog.is_enabled(
+            guild_id,
+            module_name
+        )
+
     def get_log_channel(self, guild_id):
-        rows = db.get("logging_channel", {"guild_id": guild_id})
+
+        rows = db.get(
+            "logging_channel",
+            {"guild_id": guild_id}
+        )
 
         if not rows:
             return None
 
-        channel_id = int(rows[0][1])  # (guild_id, channel_id)
+        channel_id = int(rows[0][1])
+
         return self.bot.get_channel(channel_id)
 
-    async def add_log(self, guild_id, event_name, event_description, event_colour):
+    async def add_log(
+        self,
+        guild_id,
+        event_name,
+        event_description,
+        event_colour
+    ):
+
         log_channel = self.get_log_channel(guild_id)
 
         if log_channel is None:
@@ -42,13 +71,16 @@ class LogsManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
+
         if message.guild is None:
             return
 
-        if not self.bot.config["logging"]["deleted_messages"]:
+        if not await self.is_enabled(
+            message.guild.id,
+            "logs_deleted_messages"
+        ):
             return
 
-        # Ignore bot messages if wanted
         if message.author.bot:
             return
 
@@ -65,6 +97,7 @@ class LogsManager(commands.Cog):
         embed_urls = []
 
         for embed in message.embeds:
+
             if embed.image and embed.image.url:
                 embed_urls.append(embed.image.url)
 
@@ -96,17 +129,27 @@ class LogsManager(commands.Cog):
         )
 
     @commands.Cog.listener()
-    async def on_message_edit(self, old_message, new_message):
+    async def on_message_edit(
+        self,
+        old_message,
+        new_message
+    ):
+
         if old_message.guild is None:
             return
 
-        if old_message.author == self.bot.user:
+        if old_message.author.bot:
             return
 
-        if not bot.config["logging"]["edited_messages"]:
+        if not await self.is_enabled(
+            old_message.guild.id,
+            "logs_edited_messages"
+        ):
             return
 
-        log_channel = self.get_log_channel(old_message.guild.id)
+        log_channel = self.get_log_channel(
+            old_message.guild.id
+        )
 
         if log_channel is None:
             return
@@ -134,10 +177,16 @@ class LogsManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        if not self.bot.config["logging"]["member_join"]:
+
+        if not await self.is_enabled(
+            member.guild.id,
+            "logs_member_join"
+        ):
             return
 
-        joined_at_timestamp = int(member.joined_at.timestamp())
+        joined_at_timestamp = int(
+            member.joined_at.timestamp()
+        )
 
         await self.add_log(
             guild_id=member.guild.id,
@@ -152,7 +201,11 @@ class LogsManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        if not self.bot.config["logging"]["member_remove"]:
+
+        if not await self.is_enabled(
+            member.guild.id,
+            "logs_member_remove"
+        ):
             return
 
         await self.add_log(
@@ -167,36 +220,47 @@ class LogsManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+
         if message.guild is None:
             return
 
         if message.author.bot:
             return
 
+        if not await self.is_enabled(
+            message.guild.id,
+            "logs_invites"
+        ):
+            return
+
         guild_id = message.guild.id
+
         log_channel = self.get_log_channel(guild_id)
 
-        if (
-            self.bot.config["logging"]["invites"]
-            and log_channel is not None
-        ):
-            invite_links = re.findall(self.invite_regex, message.content)
+        if log_channel is None:
+            return
 
-            if invite_links:
-                links_found = len(invite_links)
+        invite_links = re.findall(
+            self.invite_regex,
+            message.content
+        )
 
-                embed = discord.Embed(
-                    title="Log - Invite Posted",
-                    description=(
-                        f"{message.author} posted "
-                        f"{links_found} Discord invite(s) "
-                        f"in {message.channel}"
-                    ),
-                    colour=0xFFA500
-                )
+        if invite_links:
 
-                await log_channel.send(embed=embed)
+            links_found = len(invite_links)
+
+            embed = discord.Embed(
+                title="Log - Invite Posted",
+                description=(
+                    f"{message.author} posted "
+                    f"{links_found} Discord invite(s) "
+                    f"in {message.channel}"
+                ),
+                colour=0xFFA500
+            )
+
+            await log_channel.send(embed=embed)
+
 
 async def setup(bot):
-
     await bot.add_cog(LogsManager(bot))

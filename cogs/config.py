@@ -22,68 +22,69 @@ class ConfigCog(commands.Cog):
                     "This command is disabled in this server."
                 )
 
-    async def _config_enable(self, ctx, command_name: str):
-        valid = get_toggleable_commands(ctx.bot)
+    async def is_enabled(
+        self,
+        guild_id: int,
+        module_name: str,
+        default: bool = True
+    ):
 
-        if command_name not in valid:
-            return "invalid_command_name"
-
-        command_obj = ctx.bot.get_command(command_name)
-
-        default = True
-
-        if (command_obj and hasattr(command_obj.callback, "__command_default__")):
-
-            default = command_obj.callback.__command_default__
-
-        db.delete(
-            "commands_is_enabled",
+        rows = db.get(
+            "modules_is_enabled",
             {
-                "guild_id": ctx.guild.id,
-                "command": command_name
+                "guild_id": guild_id,
+                "module": module_name
             }
         )
 
-        if not default:
-            db.add(
-                "commands_is_enabled",
-                ctx.guild.id,
-                command_name,
-                True
-            )
+        if not rows:
+            return default
 
-    async def _config_disable(self, ctx, command_name: str):
+        return bool(rows[0][2])
+
+    async def _config_enable(self, ctx, module_name: str):
 
         valid = get_toggleable_commands(ctx.bot)
 
-        if command_name not in valid:
-            return "invalid_command_name"
-
-        command_obj = ctx.bot.get_command(command_name)
-
-        default = True
-
-        if (
-            command_obj and
-            hasattr(command_obj.callback, "__command_default__")
-        ):
-            default = command_obj.callback.__command_default__
+        if module_name not in valid:
+            return "invalid_module_name"
 
         db.delete(
-            "commands_is_enabled",
+            "modules_is_enabled",
             {
                 "guild_id": ctx.guild.id,
-                "command": command_name
+                "module": module_name
             }
         )
 
-        if default:
-            db.add(
-                "commands_is_enabled",
-                ctx.guild.id,
-                command_name,
-                False
-            )
+        db.add(
+            "modules_is_enabled",
+            ctx.guild.id,
+            module_name,
+            True
+        )
+
+    async def _config_disable(self, ctx, module_name: str):
+
+        valid = get_toggleable_commands(ctx.bot)
+
+        if module_name not in valid:
+            return "invalid_module_name"
+
+        db.delete(
+            "modules_is_enabled",
+            {
+                "guild_id": ctx.guild.id,
+                "module": module_name
+            }
+        )
+
+        db.add(
+            "modules_is_enabled",
+            ctx.guild.id,
+            module_name,
+            False
+        )
 
     @commands.hybrid_group(name="config")
     async def config(self, ctx):
@@ -93,44 +94,48 @@ class ConfigCog(commands.Cog):
 
     @config.command(name="enable")
     @commands.has_permissions(administrator=True)
-    async def config_enable(self, ctx, command_name: str):
+    async def config_enable(self, ctx, module_name: str):
 
-        error = await self._config_enable(ctx, command_name)
+        error = await self._config_enable(ctx, module_name)
 
-        if error == "invalid_command_name":
+        if error == "invalid_module_name":
+
             valid_commands = get_toggleable_commands(ctx.bot)
 
             await ctx.send(
-                f"Invalid command. Need help? use /discord to get an invite link for help!\n"
-                f"Available commands: {', '.join(valid_commands)}"
+                f"Invalid module.\n"
+                f"Available modules: {', '.join(valid_commands)}"
             )
+
         else:
-            await ctx.send(f"Enabled `{command_name}`")
+            await ctx.send(f"Enabled `{module_name}`")
 
     @config.command(name="disable")
     @commands.has_permissions(administrator=True)
-    async def config_disable(self, ctx, command_name: str):
+    async def config_disable(self, ctx, module_name: str):
 
-        error = await self._config_disable(ctx, command_name)
+        error = await self._config_disable(ctx, module_name)
 
-        if error == "invalid_command_name":
+        if error == "invalid_module_name":
+
             valid_commands = get_toggleable_commands(ctx.bot)
 
             await ctx.send(
-                f"Invalid command. Need help? use /discord to get an invite link for help!\n"
-                f"Available commands: {', '.join(valid_commands)}"
+                f"Invalid module.\n"
+                f"Available modules: {', '.join(valid_commands)}"
             )
+
         else:
-            await ctx.send(f"Disabled `{command_name}`")
+            await ctx.send(f"Disabled `{module_name}`")
 
     @config.command(name="list")
     @commands.has_permissions(administrator=True)
     async def config_list(self, ctx):
 
-        cmds = get_toggleable_commands(ctx.bot)
+        modules = get_toggleable_commands(ctx.bot)
 
         rows = db.get(
-            "commands_is_enabled",
+            "modules_is_enabled",
             {"guild_id": ctx.guild.id}
         ) or []
 
@@ -141,40 +146,23 @@ class ConfigCog(commands.Cog):
 
         lines = []
 
-        for cmd in cmds:
+        for module in modules:
 
-            command_obj = ctx.bot.get_command(cmd)
-
-            default = True
-
-            if (
-                command_obj and
-                hasattr(
-                    command_obj.callback,
-                    "__command_default__"
-                )
-            ):
-                default = command_obj.callback.__command_default__
-
-            if cmd in overrides:
+            if module in overrides:
                 state = (
                     "Enabled"
-                    if overrides[cmd]
+                    if overrides[module]
                     else "Disabled"
                 )
             else:
-                state = (
-                    "Enabled (default)"
-                    if default
-                    else "Disabled (default)"
-                )
+                state = "Enabled (default)"
 
-            lines.append(f"{cmd}: {state}")
+            lines.append(f"{module}: {state}")
 
         message = (
             "\n".join(lines)
             if lines
-            else "No commands found"
+            else "No modules found"
         )
 
         await ctx.send(f"```\n{message}\n```")
@@ -184,16 +172,16 @@ class ConfigCog(commands.Cog):
     async def config_reset(self, ctx):
 
         db.delete(
-            "commands_is_enabled",
+            "modules_is_enabled",
             {"guild_id": ctx.guild.id}
         )
 
         await ctx.send(
-            "Config as reset back to default"
+            "Config reset back to default"
         )
 
-    @config_enable.autocomplete("command_name")
-    @config_disable.autocomplete("command_name")
+    @config_enable.autocomplete("module_name")
+    @config_disable.autocomplete("module_name")
     async def command_autocomplete(
         self,
         interaction: discord.Interaction,
