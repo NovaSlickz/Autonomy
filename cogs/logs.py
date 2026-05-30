@@ -1,9 +1,9 @@
 import re
+
 import discord
 from discord.ext import commands
-from db import Database
 
-db = Database("bot.db")
+from .shared import db
 
 
 class LogsManager(commands.Cog):
@@ -38,13 +38,18 @@ class LogsManager(commands.Cog):
 
         rows = db.get(
             "logging_channel",
-            {"guild_id": guild_id}
+            {
+                "guild_id": guild_id
+            }
         )
 
         if not rows:
             return None
 
-        channel_id = int(rows[0][1])
+        try:
+            channel_id = int(rows[0][1])
+        except (ValueError, TypeError):
+            return None
 
         return self.bot.get_channel(channel_id)
 
@@ -75,13 +80,13 @@ class LogsManager(commands.Cog):
         if message.guild is None:
             return
 
+        if message.author.bot:
+            return
+
         if not await self.is_enabled(
             message.guild.id,
             "logs.deleted_messages"
         ):
-            return
-
-        if message.author.bot:
             return
 
         content = message.content or "No message content"
@@ -125,7 +130,7 @@ class LogsManager(commands.Cog):
             guild_id=message.guild.id,
             event_name="Log - Message Deleted",
             event_description=description,
-            event_colour=0xff0000
+            event_colour=0xFF0000
         )
 
     @commands.Cog.listener()
@@ -139,6 +144,9 @@ class LogsManager(commands.Cog):
             return
 
         if old_message.author.bot:
+            return
+
+        if old_message.content == new_message.content:
             return
 
         if not await self.is_enabled(
@@ -157,19 +165,19 @@ class LogsManager(commands.Cog):
         old_embed = discord.Embed(
             title="Old Message",
             description=(
-                f"{old_message.system_content}\n"
+                f"{old_message.content or 'No content'}\n\n"
                 f"Author: {old_message.author}"
             ),
-            colour=0xffa500
+            colour=0xFFA500
         )
 
         new_embed = discord.Embed(
             title="New Message",
             description=(
-                f"{new_message.system_content}\n"
+                f"{new_message.content or 'No content'}\n\n"
                 f"Author: {new_message.author}"
             ),
-            colour=0x00ff00
+            colour=0x00FF00
         )
 
         await log_channel.send(embed=old_embed)
@@ -184,8 +192,10 @@ class LogsManager(commands.Cog):
         ):
             return
 
-        joined_at_timestamp = int(
-            member.joined_at.timestamp()
+        joined_text = (
+            f"<t:{int(member.joined_at.timestamp())}:R>"
+            if member.joined_at
+            else "Unknown"
         )
 
         await self.add_log(
@@ -194,9 +204,9 @@ class LogsManager(commands.Cog):
             event_description=(
                 f"Member: {member.mention}\n"
                 f"User ID: {member.id}\n"
-                f"Joined: <t:{joined_at_timestamp}:R>"
+                f"Joined: {joined_text}"
             ),
-            event_colour=0x00ff00
+            event_colour=0x00FF00
         )
 
     @commands.Cog.listener()
@@ -212,10 +222,10 @@ class LogsManager(commands.Cog):
             guild_id=member.guild.id,
             event_name="Log - Member Leave/Remove",
             event_description=(
-                f"Member: {member.mention} left the server.\n"
+                f"Member: {member}\n"
                 f"User ID: {member.id}"
             ),
-            event_colour=0xff0000
+            event_colour=0xFF0000
         )
 
     @commands.Cog.listener()
@@ -233,33 +243,26 @@ class LogsManager(commands.Cog):
         ):
             return
 
-        guild_id = message.guild.id
-
-        log_channel = self.get_log_channel(guild_id)
-
-        if log_channel is None:
-            return
-
-        invite_links = re.findall(
-            self.invite_regex,
+        invite_links = self.invite_regex.findall(
             message.content
         )
 
-        if invite_links:
+        if not invite_links:
+            return
 
-            links_found = len(invite_links)
+        links_found = len(invite_links)
 
-            embed = discord.Embed(
-                title="Log - Invite Posted",
-                description=(
-                    f"{message.author} posted "
-                    f"{links_found} Discord invite(s) "
-                    f"in {message.channel}"
-                ),
-                colour=0xFFA500
-            )
-
-            await log_channel.send(embed=embed)
+        await self.add_log(
+            guild_id=message.guild.id,
+            event_name="Log - Invite Posted",
+            event_description=(
+                f"User: {message.author.mention}\n"
+                f"User ID: {message.author.id}\n"
+                f"Channel: {message.channel.mention}\n"
+                f"Invites Found: {links_found}"
+            ),
+            event_colour=0xFFA500
+        )
 
 
 async def setup(bot):
