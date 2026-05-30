@@ -113,10 +113,7 @@ class ImageFilterCog(commands.Cog):
                 try:
                     await message.delete()
 
-                    print(
-                        f"[ImageFilter] Deleted "
-                        f"(distance={distance})"
-                    )
+                    print(f"[ImageFilter] Deleted (distance={distance})")
 
                     logs_cog = self.bot.get_cog("LogsManager")
 
@@ -134,15 +131,10 @@ class ImageFilterCog(commands.Cog):
                         )
 
                 except discord.Forbidden:
-                    print(
-                        "[ImageFilter] Missing permissions "
-                        "to delete message"
-                    )
+                    print("[ImageFilter] Missing permissions to delete message")
 
                 except Exception as e:
-                    print(
-                        f"[ImageFilter] Delete failed: {e}"
-                    )
+                    print(f"[ImageFilter] Delete failed: {e}")
 
                 return
 
