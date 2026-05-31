@@ -253,7 +253,7 @@ class ModerationCog(commands.Cog):
     async def warn(self, ctx):
 
         if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid use")
+            await ctx.send("Invalid use, you must use a subcommand example: .warn add")
 
     @warn.command(name="add")
     @command_enabled(default=True)

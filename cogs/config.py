@@ -15,12 +15,16 @@ class ConfigCog(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
 
-        if isinstance(error, commands.CheckFailure):
+        if isinstance(error, commands.MissingPermissions):
+            perms = ", ".join(error.missing_permissions)
+            await ctx.send(
+                f"You need the following permissions to use this command: `{perms}`"
+            )
 
-            if ctx.guild:
-                await ctx.send(
-                    "This command is disabled in this server."
-                )
+        elif isinstance(error, commands.CheckFailure):
+            await ctx.send(
+                "This command is disabled in this server."
+            )
 
     async def is_enabled(
         self,
@@ -91,12 +95,7 @@ class ConfigCog(commands.Cog):
             }
         )
 
-        db.add(
-            "modules_is_enabled",
-            ctx.guild.id,
-            module_name,
-            False
-        )
+        db.add("modules_is_enabled", ctx.guild.id, module_name, False)
 
     @commands.hybrid_group(name="config")
     async def config(self, ctx):
@@ -141,14 +140,8 @@ class ConfigCog(commands.Cog):
         )
 
     @config.command(name="disable")
-    @commands.has_permissions(
-        administrator=True
-    )
-    async def config_disable(
-        self,
-        ctx,
-        module_name: str
-    ):
+    @commands.has_permissions(administrator=True)
+    async def config_disable(self, ctx, module_name: str):
 
         error = await self._config_disable(
             ctx,
@@ -174,15 +167,8 @@ class ConfigCog(commands.Cog):
         )
 
     @config.command(name="set")
-    @commands.has_permissions(
-        administrator=True
-    )
-    async def config_set(
-        self,
-        ctx,
-        module_name: str,
-        channel: discord.TextChannel
-    ):
+    @commands.has_permissions(administrator=True)
+    async def config_set(self, ctx, module_name: str, channel: discord.TextChannel):
 
         # currently only logs
         # supports extra config
