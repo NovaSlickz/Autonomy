@@ -151,6 +151,11 @@ class ModerationCog(commands.Cog):
         try:
             await member.ban(reason=reason)
             await ctx.send(f"Banned **{member.mention}**")
+        except discord.NotFound:
+            await ctx.send("Cannot find that user")
+        
+        except discord.Forbidden:
+            await ctx.send("I do not have permission to ban this member\n(its possible I am lacking permission to ban any members)")
 
         except Exception:
             await ctx.send("Failed to ban")
