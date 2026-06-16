@@ -122,9 +122,9 @@ class ImageFilterCog(commands.Cog):
                             guild_id = message.guild.id,
                             event_name = "Log - Known scam image",
                             event_description=(
-                                f"Author: {message.author} ({message.author.id})\n",
-                                f"Channel: {message.channel.mention}\n",
-                                f"Distance: {distance}\n",
+                                f"Author: {message.author} ({message.author.id})\n"
+                                f"Channel: {message.channel.mention}\n"
+                                f"Distance: {distance}\n"
                                 f"Message Content: {message.content or 'message contained no text'}"
                             ),
                             event_colour=0xff0000
@@ -135,11 +135,11 @@ class ImageFilterCog(commands.Cog):
                         guild_id = message.guild.id,
                         event_name = "Log - Known scam image",
                         event_description=(
-                            f"Author: {message.author} ({message.author.id})\n",
-                            f"Channel: {message.channel.mention}\n",
-                            f"Distance: {distance}\n",
-                            f"Message Content: {message.content or 'message contained no text'}",
-                            "WARNING",
+                            f"Author: {message.author} ({message.author.id})\n"
+                            f"Channel: {message.channel.mention}\n"
+                            f"Distance: {distance}\n"
+                            f"Message Content: {message.content or 'message contained no text'}"
+                            "WARNING"
                             "Autonomy LACKED THE PERMISSION TO DELETE THE MESSAGE"
                         )
                     )

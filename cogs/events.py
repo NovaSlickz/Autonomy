@@ -1,5 +1,29 @@
 from discord.ext import commands
 import discord
+from datetime import datetime, UTC, timedelta
+import re
+
+DURATION_RE = re.compile(r"(\d+)([wdhm])")
+
+def parse_duration(text: str) -> timedelta:
+    total = timedelta()
+
+    for amount, unit in DURATION_RE.findall(text.lower()):
+        amount = int(amount)
+
+        if unit == "w":
+            total += timedelta(weeks=amount)
+        elif unit == "d":
+            total += timedelta(days=amount)
+        elif unit == "h":
+            total += timedelta(hours=amount)
+        elif unit == "m":
+            total += timedelta(minutes=amount)
+
+    if total.total_seconds() == 0:
+        raise ValueError("Invalid duration")
+
+    return total
 
 class EventCreateModal(discord.ui.Modal, title="Schedule event"):
     title_input = discord.ui.TextInput(
@@ -19,7 +43,7 @@ class EventCreateModal(discord.ui.Modal, title="Schedule event"):
 
     timeframe_input = discord.ui.TextInput(
         label="Time Frame",
-        placeholder="e.g. 24 hours, 7 days, 1 month",
+        placeholder="e.g. 24h, 7d or 1m",
         required=True,
         max_length=50,
     )
@@ -40,6 +64,8 @@ class EventCreateModal(discord.ui.Modal, title="Schedule event"):
             embed=embed,
             ephemeral=True
         )
+
+        duration = parse_duration(timeframe)
 
 class EventCog(commands.Cog):
     def __init__(self, bot):
