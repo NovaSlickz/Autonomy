@@ -14,6 +14,11 @@ class UtilityCog(commands.Cog):
     async def ping(self, ctx):
         await ctx.send("Pong!")
 
+    @commands.hybrid_command(name="botinvite")
+    @command_enabled(default=True)
+    async def invite(self, ctx):
+        await ctx.send("https://discord.com/oauth2/authorize?client_id=1481512387419836416")
+
     @commands.hybrid_command(name="documentation")
     @command_enabled(default=True)
     async def documentation(self, ctx):

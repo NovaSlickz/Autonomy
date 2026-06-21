@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 import datetime
 import json
+import re
 
 from .shared import db, command_enabled
 
@@ -361,7 +362,7 @@ class ModerationCog(commands.Cog):
             f"**Blocked links**\n{links}"
         )
 
-    @commands.hybrid_group(name="words", description="Manage automatically removed links")
+    @commands.hybrid_group(name="words", description="Manage automatically removed words")
     @command_enabled(default=True)
     @commands.has_permissions(administrator=True)
     async def words(self, ctx):
@@ -379,7 +380,6 @@ class ModerationCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def words_add(self, ctx, word: str):
         try:
-            print("GOT EM")
             guild_id = ctx.guild.id
 
             existing = db.get(
@@ -389,22 +389,78 @@ class ModerationCog(commands.Cog):
                     "word": word
                 }
             )
-            print("GOT EM x2")
             if existing:
                 return await ctx.send(
                     "That word is already being blocked."
                 )
-            print("GOT EM x3")
             db.add(
                 "blocked_words",
                 guild_id,
                 word
             )
-            print("GOT EM x4")
             await ctx.send(
                 f"Added `{word}` to the blocked links list."
             )
-            print("GOT EM x5")
+        except Exception as error:
+            print(error)
+
+    @words.command(name="bulk", description="Add multiple words to block at once")
+    @command_enabled(default=True)
+    @commands.has_permissions(administrator=True)
+    async def bulk_add(self, ctx, *, words: str):
+        try:
+            guild_id = ctx.guild.id
+
+            # Extract quoted words if present, otherwise split by commas
+            matches = re.findall(r'"([^"]+)"', words)
+
+            if matches:
+                word_list = [w.strip() for w in matches]
+            else:
+                word_list = [w.strip() for w in words.split(",") if w.strip()]
+
+            if not word_list:
+                return await ctx.send(
+                    "Please provide at least one word."
+                )
+
+            added = []
+            skipped = []
+
+            for word in word_list:
+                existing = db.get(
+                    "blocked_words",
+                    {
+                        "guild_id": guild_id,
+                        "word": word
+                    }
+                )
+
+                if existing:
+                    skipped.append(word)
+                    continue
+
+                db.add(
+                    "blocked_words",
+                    guild_id,
+                    word
+                )
+                added.append(word)
+
+            message = []
+
+            if added:
+                message.append(
+                    f"Added {len(added)} word(s): {', '.join(f'`{w}`' for w in added)}"
+                )
+
+            if skipped:
+                message.append(
+                    f"Already blocked: {', '.join(f'`{w}`' for w in skipped)}"
+                )
+
+            await ctx.send("\n".join(message))
+
         except Exception as error:
             print(error)
 
