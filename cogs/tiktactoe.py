@@ -107,7 +107,7 @@ class TicTacToe(commands.Cog):
         self.bot = bot
 
     # Notice we use @commands.hybrid_command instead of @bot.hybrid_command inside a cog
-    @commands.hybrid_command(name="game", description="Starts a modern game of Tic-Tac-Toe!")
+    @commands.hybrid_command(name="tiktactoe", description="Starts a modern game of Tic-Tac-Toe!")
     async def game(self, ctx: commands.Context):
         view = TicTacToeView(player_x=ctx.author)
         await ctx.send(f"🎮 **{ctx.author.display_name}** started a match! Click any square to challenge them as ⭕!", view=view)
