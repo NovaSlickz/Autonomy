@@ -73,6 +73,7 @@ class MyBot(commands.Bot):
         await self.load_extension("cogs.events")
         await self.load_extension("cogs.announcements")
         await self.load_extension("cogs.LeaveJoin")
+        await self.load_extension("cogs.tiktaktoe")
 
         self.add_view(TicketPanelView())
         self.add_view(TicketPanelView())
